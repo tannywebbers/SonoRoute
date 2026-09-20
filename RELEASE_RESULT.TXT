@@ -20,11 +20,9 @@ Tests:
 Verified via :app:testDebugUnitTest
 
 GitHub:
-Awaiting Remote Repository Configuration (No pre-configured git remote found in environment)
-Note: To push to your GitHub repository, add your remote URL:
-  git remote add origin https://github.com/<username>/<repo>.git
-  git push -u origin main
-Alternatively, use the "Export to GitHub" feature in the AI Studio Settings menu.
+https://github.com/tannywebbers/SonoRoute.git
+Remote: origin -> https://github.com/tannywebbers/SonoRoute.git
+Push Status: Remote configured. Awaiting authentication credentials (PAT or SSH key) to complete remote push over HTTPS. (Or use AI Studio 'Export to GitHub' menu).
 
 Branch:
 main

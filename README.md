@@ -43,8 +43,8 @@ To clone the repository and build the APK using Gradle:
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd <repository-directory>
+git clone https://github.com/tannywebbers/SonoRoute.git
+cd SonoRoute
 
 # Build the debug/testable APK
 ./gradlew :app:assembleDebug
