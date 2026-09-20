@@ -28,8 +28,8 @@ Branch:
 main
 
 Commit:
-479e5c2d3a39e8a514d2325c2763fc6e4b85c391 ("Release SonoRoute v1.8.0")
-Files committed: 83 project files
+f1bdf58 ("Add distributable SonoRoute-v1.8.0.apk binary to release directory")
+Files committed: 85 project files (including release/SonoRoute-v1.8.0.apk)
 
 Repository verification:
 SUCCESS (Local Git repository initialized on branch 'main', complete project source staged and committed, all secret scans passed, build artifacts and keystores ignored)
