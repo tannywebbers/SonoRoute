@@ -1,0 +1,6 @@
+{
+  "name": "SonoRoute",
+  "description": "Android audio input/output routing and audio performance utility",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

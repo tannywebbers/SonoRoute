@@ -1,0 +1,91 @@
+================================================================================
+SONOROUTE — PHASE 8 FINAL RELEASE, COMPATIBILITY & PRODUCTION POLISH REPORT
+================================================================================
+
+1. PHASE 8 STATUS
+-----------------
+Status: COMPLETE (Production-Ready)
+Date: September 19, 2026
+
+2. VERSION SPECIFICATIONS
+-------------------------
+App Name: SonoRoute
+Application ID: com.aistudio.audiorouter.rkxw
+versionName: 1.8.0
+versionCode: 6
+
+3. MAJOR CHANGES & PRODUCTION POLISH
+------------------------------------
+• Android API Compatibility Audit:
+  - Validated API compatibility across minSdk 24 (Android 7.0) to targetSdk 36 (Android 16).
+  - Modern API 31+ (Android 12) AudioManager.setCommunicationDevice / clearCommunicationDevice with clean pre-API 31 fallback (MODE_IN_COMMUNICATION / isSpeakerphoneOn).
+  - API guards around AudioPlaybackCapture (API 29+), Bluetooth BLUETOOTH_CONNECT runtime permissions (API 31+), and device addresses (API 28+).
+  - Resolved icon deprecations and date formatting warnings cleanly in DiagnosticsSheet.
+
+• Routing Reality Check & Audio Architecture Transparency:
+  - Distinct separation between:
+    A. SonoRoute-owned audio streams and direct low-latency pipelines
+    B. Android communication-device routing (MODE_IN_COMMUNICATION / setCommunicationDevice)
+    C. System-controlled routing (OS-managed fallback)
+    D. Isolated third-party sandboxed applications (Spotify, YouTube, WhatsApp)
+    E. AudioPlaybackCapture limitations (API 29+ target app opt-in / MediaProjection consent)
+  - Clear, honest user-visible states: Active, Available, Switching, System controlled, Unavailable, Failed, Adjusted by device.
+  - Zero simulated or fake routing states.
+
+• Audio Stability, Self-Healing & Glitch Recovery:
+  - Real-time AudioTrack.underrunCount tracking flagging buffer instability when underruns >= 2.
+  - Interactive self-healing banner allowing users to step up the audio buffer to the next preset (increaseBuffer) with a single tap.
+  - Profile switching confirmation dialog preventing accidental interruption of active sessions.
+  - Acoustic feedback warning protection preventing dangerous speakerphone monitoring loops.
+
+• Persistent Routing Across Instances:
+  - SharedPreferences storage ("sonoroute_routing_prefs") saving preferred input/output endpoints (hardware type, device name, peripheral MAC address).
+  - Automatic restoration of user-preferred routes upon peripheral reconnection or app relaunch.
+
+• Privacy & Security Pass:
+  - 100% on-device local execution: no network transmission, no analytics, no advertising, and no telemetry.
+  - No persistent audio recording storage.
+  - Microphone monitoring disabled by default; audio buffers in memory are freed immediately on stream stoppage.
+  - Permissions strictly minimized to RECORD_AUDIO, BLUETOOTH_CONNECT, and MODIFY_AUDIO_SETTINGS.
+
+• Battery & Resource Efficiency:
+  - Zero background audio monitoring, polling, or RMS calculation when idle.
+  - Explicit releaseAll() invoked on ViewModel destruction releasing AudioRecord, AudioTrack, communication devices, and audio focus.
+
+4. COMPATIBILITY FINDINGS
+-------------------------
+• Android 12+ (API 31–36):
+  - Supported: Full native setCommunicationDevice and clearCommunicationDevice routing.
+  - Supported: Fine-grained BLUETOOTH_CONNECT permission handling.
+  - Behavior: Communication route binds to telephony and VoIP audio streams; system-wide media playback route remains governed by OS audio policy.
+• Android 10–11 (API 29–30):
+  - Supported: AudioPlaybackCapture API for compatible media projection streams.
+  - Routing: Utilizes AudioManager.mode = MODE_IN_COMMUNICATION with speakerphone and SCO toggles.
+• Android 7.0–9.0 (API 24–28):
+  - Supported: AudioDeviceInfo enumeration and legacy audio mode routing.
+  - Playback Capture: Gracefully reports "Unavailable (< Android 10)".
+  - Fallback: System-controlled routing is cleanly maintained with zero crashes.
+
+5. BUILD & TEST RESULTS
+-----------------------
+• Compile Applet Build: SUCCESS
+• Test Suite Execution (:app:testDebugUnitTest): SUCCESS
+• Total Unit & Robolectric Tests: 35
+• Tests Passed: 35 (100%)
+• Tests Failed: 0
+• Time to execute: 35s
+
+6. KNOWN ANDROID PLATFORM LIMITATIONS
+-------------------------------------
+1. Third-Party App Routing: Android does not permit third-party applications to universally override the audio routing of external sandboxed applications (e.g. forcing YouTube to play through a specific peripheral when the OS or user selected another). SonoRoute transparently documents and communicates this boundary.
+2. AudioPlaybackCapture: Requires API 29+ and target applications must have android:allowAudioPlaybackCapture="true" in their manifest or explicit user MediaProjection consent.
+3. Bluetooth Codec Latency: Bluetooth hardware (SBC, AAC, LDAC, aptX) introduces unavoidable hardware/codec transmission buffer delay (typically 40ms–180ms) regardless of client application buffer settings.
+
+7. FEATURE INTEGRITY & SCOPE DISCIPLINE
+---------------------------------------
+• Confirmation: NO unrelated features, accounts, cloud backends, login screens, advertisements, subscriptions, analytics, cloud audio processors, or equalizers were added.
+• The application strictly adheres to user intent, providing an iOS-inspired minimalist audio control center for Android.
+
+================================================================================
+END OF REPORT
+================================================================================

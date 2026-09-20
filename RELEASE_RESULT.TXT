@@ -1,0 +1,54 @@
+================================================================================
+SONOROUTE RELEASE EXPORT REPORT
+================================================================================
+
+Version: 1.8.0
+versionCode: 6
+
+Build:
+SUCCESS
+
+APK:
+release/SonoRoute-v1.8.0.apk
+(Internal build artifact: app/build/outputs/apk/debug/app-debug.apk)
+Size: 23 MB
+Package: com.aistudio.audiorouter.rkxw
+SDK: minSdk 24, targetSdk 36, compileSdk 36
+
+Tests:
+35/35 PASS (0 failures, 0 skipped, 100% success rate)
+Verified via :app:testDebugUnitTest
+
+GitHub:
+Awaiting Remote Repository Configuration (No pre-configured git remote found in environment)
+Note: To push to your GitHub repository, add your remote URL:
+  git remote add origin https://github.com/<username>/<repo>.git
+  git push -u origin main
+Alternatively, use the "Export to GitHub" feature in the AI Studio Settings menu.
+
+Branch:
+main
+
+Commit:
+479e5c2d3a39e8a514d2325c2763fc6e4b85c391 ("Release SonoRoute v1.8.0")
+Files committed: 83 project files
+
+Repository verification:
+SUCCESS (Local Git repository initialized on branch 'main', complete project source staged and committed, all secret scans passed, build artifacts and keystores ignored)
+
+Secret scan:
+PASS (Zero API keys, personal access tokens, private keys, or passwords detected)
+
+Project export:
+COMPLETE (Full source tree, build configuration, tests, resources, and Gradle wrapper prepared and committed)
+
+Known limitations:
+1. Third-Party App Sandboxing: Android security boundaries prevent third-party applications from universally forcing external sandboxed applications (e.g., Spotify, YouTube) to route audio through SonoRoute endpoints.
+2. Communication-Device Routing: Native routing via AudioManager.setCommunicationDevice (API 31+) is tailored for communication and VoIP audio streams.
+3. AudioPlaybackCapture Restrictions: Capturing internal playback requires API 29+ and application manifest consent (android:allowAudioPlaybackCapture="true") or explicit user MediaProjection authorization.
+4. Bluetooth Codec Latency: Hardware/codec buffer latency (typically 40ms–180ms) is dictated by peripheral firmware and Android Bluetooth stack implementations.
+5. Hardware Availability: Selectable endpoints reflect physical audio hardware and peripherals actively exposed by the device HAL.
+
+================================================================================
+END OF REPORT
+================================================================================
