@@ -1,6 +1,7 @@
 package com.example.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,11 +19,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -60,6 +63,7 @@ import com.example.audio.session.SessionLifecycleState
 import com.example.ui.AudioProfile
 import com.example.ui.components.AudioPerformanceBottomSheet
 import com.example.ui.components.ConnectionBanner
+import com.example.ui.components.ControlPanelBottomSheet
 import com.example.ui.components.DeviceSelectionBottomSheet
 import com.example.ui.components.DeviceSelectorCard
 import com.example.ui.components.DiagnosticsEntryCard
@@ -135,6 +139,7 @@ fun MainScreen(
     var showProfileSheet by rememberSaveable { mutableStateOf(false) }
     var showLatencySheet by rememberSaveable { mutableStateOf(false) }
     var showDiagnosticsSheet by rememberSaveable { mutableStateOf(false) }
+    var showControlPanelSheet by rememberSaveable { mutableStateOf(false) }
     var showFeedbackDialog by remember { mutableStateOf(false) }
 
     val isRoutingOutput = routeState is RouteOperationState.InProgress &&
@@ -200,6 +205,17 @@ fun MainScreen(
                     containerColor = MaterialTheme.colorScheme.background
                 ),
                 actions = {
+                    IconButton(
+                        onClick = { showControlPanelSheet = true },
+                        modifier = Modifier.testTag("top_bar_control_panel_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Tune,
+                            contentDescription = "Control Panel",
+                            tint = IosSystemBlue,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                     IconButton(
                         onClick = { showDiagnosticsSheet = true },
                         modifier = Modifier.testTag("top_bar_diagnostics_button")
@@ -285,6 +301,91 @@ fun MainScreen(
                                 ) {
                                     Text("Fix Buffer", fontSize = 12.sp, color = Color.White)
                                 }
+                            }
+                        }
+                    }
+                }
+
+                // CONTROL PANEL QUICK ACCESS CARD
+                item(key = "control_panel_card") {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { showControlPanelSheet = true }
+                            .testTag("control_panel_quick_card"),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, IosBorderLight)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .background(IosSystemBlue.copy(alpha = 0.12f), RoundedCornerShape(8.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Tune,
+                                            contentDescription = null,
+                                            tint = IosSystemBlue,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = "Control Panel",
+                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = IosTextPrimary
+                                        )
+                                        Text(
+                                            text = "Hardware Routing & Live Tests",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = IosTextSecondary
+                                        )
+                                    }
+                                }
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = if (routingState?.outputRouteVerified == true && routingState.inputRouteVerified) IosSystemGreen.copy(alpha = 0.15f) else IosSystemAmber.copy(alpha = 0.15f)
+                                ) {
+                                    Text(
+                                        text = if (routingState?.outputRouteVerified == true && routingState.inputRouteVerified) "Verified" else "Routing Active",
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold, fontSize = 11.sp),
+                                        color = if (routingState?.outputRouteVerified == true && routingState.inputRouteVerified) IosSystemGreen else IosSystemAmber,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                            HorizontalDivider(color = IosBorderLight)
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Out: ${routingState?.actualOutputDevice?.name ?: activeOutput?.name ?: "Default"}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = IosTextPrimary,
+                                    maxLines = 1
+                                )
+                                Text(
+                                    text = "Mic: ${routingState?.actualInputDevice?.name ?: activeInput?.name ?: "Default"}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = IosTextPrimary,
+                                    maxLines = 1
+                                )
                             }
                         }
                     }
@@ -462,6 +563,31 @@ fun MainScreen(
             onSetMonitoringLevel = onSetMonitoringLevel,
             onClearDiagnosticsLog = onClearDiagnosticsLog,
             onDismissRequest = { showDiagnosticsSheet = false }
+        )
+    }
+
+    if (showControlPanelSheet) {
+        ControlPanelBottomSheet(
+            onDismiss = { showControlPanelSheet = false },
+            routingState = routingState,
+            activeSession = activeSession,
+            outputDevices = outputDevices,
+            inputDevices = inputDevices,
+            isMonitoringEnabled = isMonitoringEnabled,
+            monitoringLevel = monitoringLevel,
+            monitoringFeedbackWarning = monitoringFeedbackWarning,
+            onSelectOutput = onSelectOutput,
+            onSelectInput = onSelectInput,
+            onResetOutputToDefault = onResetOutputToDefault,
+            onResetInputToDefault = onResetInputToDefault,
+            onToggleMonitoring = onToggleMonitoring,
+            onSetMonitoringLevel = onSetMonitoringLevel,
+            onTestOutput = onTestOutput,
+            onTestMicrophone = onTestMicrophone,
+            onStartSession = onStartSession,
+            onPauseSession = onPauseSession,
+            onResumeSession = onResumeSession,
+            onStopSession = onStopSession
         )
     }
 }

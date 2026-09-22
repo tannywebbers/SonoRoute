@@ -226,6 +226,7 @@ class AudioSessionManager(
         )
 
         logEvent("SESSION", "${sessionType.title} session is now ACTIVE (${perfState.actualBufferSizeFrames} frames @ ${perfState.actualSampleRate}Hz)")
+        updateSessionServiceNotification()
     }
 
     /**
@@ -242,6 +243,8 @@ class AudioSessionManager(
 
         // Release Audio Focus
         focusManager.abandonFocus()
+
+        AudioSessionService.stop(context)
 
         _activeSession.value = AudioSession(
             sessionType = _activeSession.value.sessionType,
@@ -533,8 +536,24 @@ class AudioSessionManager(
                     return@launch
                 }
 
+                // Bind streams to requested hardware devices with active route tracking
+                val targetInput = routingManager.userSelectedInput.value
+                val targetOutput = routingManager.userSelectedOutput.value
+
+                routingManager.bindActiveRecord(audioRecord, targetInput) { actualDev, isVerified, reason ->
+                    logEvent("MONITOR_ROUTE", "Mic: ${actualDev?.name ?: "Default"} (Verified: $isVerified - $reason)")
+                    updateSessionServiceNotification()
+                }
+
+                routingManager.bindActiveTrack(audioTrack, targetOutput) { actualDev, isVerified, reason ->
+                    logEvent("MONITOR_ROUTE", "Output: ${actualDev?.name ?: "Default"} (Verified: $isVerified - $reason)")
+                    updateSessionServiceNotification()
+                }
+
                 audioRecord.startRecording()
                 audioTrack.play()
+
+                updateSessionServiceNotification()
 
                 val audioBuffer = ShortArray(targetBufferFrames.coerceAtLeast(64))
                 var loopCount = 0
@@ -647,6 +666,21 @@ class AudioSessionManager(
             "Wired analog path detected (Standard 3.5mm / Line I/O)"
         } else {
             "No wired audio device currently connected"
+        }
+    }
+
+    /**
+     * Updates the persistent foreground notification with the latest verified hardware routes.
+     */
+    fun updateSessionServiceNotification() {
+        if (_activeSession.value.lifecycleState == SessionLifecycleState.ACTIVE || _isMonitoringEnabled.value) {
+            val outName = routingManager.actualOutput.value?.name
+                ?: routingManager.userSelectedOutput.value?.name
+                ?: "System Output"
+            val inName = routingManager.actualInput.value?.name
+                ?: routingManager.userSelectedInput.value?.name
+                ?: "System Mic"
+            AudioSessionService.start(context, outName, inName, _isMonitoringEnabled.value)
         }
     }
 

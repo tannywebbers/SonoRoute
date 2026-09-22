@@ -243,4 +243,35 @@ class AudioRoutingManagerTest {
         assertTrue(profiles.contains(AudioProfile.MEDIA))
         assertEquals("Standard Audio", AudioProfile.STANDARD.title)
     }
+
+    @Test
+    fun testExplicitHardwareRoutingSeparation() {
+        routingManager.updateAvailableDevices(
+            outputs = listOf(testSpeaker, testHeadphones),
+            inputs = listOf(testBuiltInMic, testHeadsetMic)
+        )
+
+        // Select speaker as output
+        routingManager.selectOutputDevice(testSpeaker)
+        assertEquals(testSpeaker.id, routingManager.userSelectedOutput.value?.id)
+        // Verify input was not touched
+        assertNull(routingManager.userSelectedInput.value)
+
+        // Select headset mic as input
+        routingManager.selectInputDevice(testHeadsetMic)
+        assertEquals(testHeadsetMic.id, routingManager.userSelectedInput.value?.id)
+        // Verify output remained speaker
+        assertEquals(testSpeaker.id, routingManager.userSelectedOutput.value?.id)
+    }
+
+    @Test
+    fun testPhase9RoutingStateVerificationFields() {
+        val state = routingManager.routingState.value
+        assertEquals(0, state.outputTestCountdown)
+        assertEquals(0, state.microphoneTestCountdown)
+        assertFalse(state.outputRouteVerified)
+        assertFalse(state.inputRouteVerified)
+        assertNull(state.actualOutputDevice)
+        assertNull(state.actualInputDevice)
+    }
 }

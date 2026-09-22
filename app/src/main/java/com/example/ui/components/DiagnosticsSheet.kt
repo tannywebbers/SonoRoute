@@ -515,9 +515,9 @@ fun DiagnosticsSheet(
                                                     color = MaterialTheme.colorScheme.onPrimary
                                                 )
                                                 Spacer(modifier = Modifier.width(6.dp))
-                                                Text("Testing...", fontSize = 12.sp)
+                                                Text("Playing (${routingState.outputTestCountdown}s)", fontSize = 12.sp)
                                             } else {
-                                                Text("Play Tone", fontSize = 12.sp)
+                                                Text("Play Tone (3s)", fontSize = 12.sp)
                                             }
                                         }
                                     }
@@ -586,9 +586,10 @@ fun DiagnosticsSheet(
                                                     color = MaterialTheme.colorScheme.onPrimary
                                                 )
                                                 Spacer(modifier = Modifier.width(6.dp))
-                                                Text("Listening...", fontSize = 12.sp)
+                                                val phaseLabel = if (routingState.microphoneTestPhase == "recording") "Rec (${routingState.microphoneTestCountdown}s)" else "Play (${routingState.microphoneTestCountdown}s)"
+                                                Text(phaseLabel, fontSize = 12.sp)
                                             } else {
-                                                Text("Test Mic", fontSize = 12.sp)
+                                                Text("Test Mic (3s)", fontSize = 12.sp)
                                             }
                                         }
                                     }

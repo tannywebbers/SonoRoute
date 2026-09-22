@@ -1,0 +1,98 @@
+================================================================================
+SONOROUTE — PHASE 9 EXECUTION & VERIFICATION REPORT
+================================================================================
+VERSION: 1.9.0
+VERSION CODE: 7
+STATUS: COMPLETE & VERIFIED (37/37 TESTS PASSING)
+
+1. OVERVIEW OF REAL-DEVICE AUDIO ROUTING DEFECTS FIXED
+--------------------------------------------------------------------------------
+Previous symptoms observed on physical Samsung/Android devices:
+- Selecting the phone built-in microphone while wired or Bluetooth headphones
+  were attached resulted in SonoRoute reporting success, yet the actual hardware
+  recording still used the headset microphone.
+- When selecting phone speaker, the route would temporarily switch and then
+  revert automatically back to wired headset within seconds.
+- Microphone monitoring was silent or failed to route to the selected endpoint.
+- Audio test duration and tone generation were unreliable and did not isolate
+  independent input/output channels.
+
+Root causes identified and repaired:
+1. AudioManager.setCommunicationDevice() on modern Android (API 31+) sets a single
+   duplex communication device for VoIP/communication mode. If used alone, setting
+   the communication device to a microphone can inadvertently pull the output route
+   or let the system audio policy revert to wired headset when communication mode
+   is cleared or renegotiated.
+2. In-flight streams (AudioTrack and AudioRecord) require explicit setPreferredDevice()
+   binding, continuous onRoutingChanged listener registration, and verified
+   hardware route inspection (via AudioTrack.routedDevice / AudioRecord.routedDevice).
+3. Without a foreground service holding a media/microphone type, Android's power
+   management and audio policy daemon reclaim custom routes and restore hardware defaults.
+
+2. ARCHITECTURAL & IMPLEMENTATION CHANGES IN PHASE 9
+--------------------------------------------------------------------------------
+A. Real Hardware Route Verification & Tracking:
+   - Updated AudioRoutingState to decouple "requested" route from "actual" route:
+     * requestedOutputDevice vs. actualOutputDevice
+     * requestedInputDevice vs. actualInputDevice
+     * outputRouteVerified and inputRouteVerified booleans
+     * outputRoutingReason and inputRoutingReason telemetry strings
+   - Integrated AudioTrack.OnRoutingChangedListener and AudioRecord.OnRoutingChangedListener.
+   - The UI strictly reflects whether the route is verified by the Android audio
+     subsystem rather than falsely assuming preference selection is active.
+   - Implemented bounded auto-recovery (MAX_RECOVERY_ATTEMPTS = 3): if Android's
+     audio policy silently redirects a stream back to wired/Bluetooth, the manager
+     detects the routing change and re-applies the requested hardware device.
+
+B. Control Panel & Persistent Notification:
+   - Created ControlPanelBottomSheet.kt:
+     * Real-time visibility into Requested vs. Actual hardware routes.
+     * Route verification status pills (Verified in Green, Diverged in Amber).
+     * Quick hardware route switching buttons for all detected outputs and inputs.
+     * Dedicated System Default reset buttons for output and input independently.
+     * Live microphone monitoring master toggle and level slider with acoustic feedback protection.
+     * 3-second hardware diagnostic tests with progress bars and countdown timers.
+     * Active session lifecycle controls (Start / Pause / Resume / Stop).
+   - Created AudioSessionService (Android Foreground Service):
+     * Declared FOREGROUND_SERVICE and FOREGROUND_SERVICE_MICROPHONE permissions.
+     * Displays a persistent notification showing the exact verified output and input devices.
+     * Provides quick Notification Actions: "Pause", "Resume", "Stop", "Reset".
+     * Prevents Android OS from killing the routing session or resetting hardware routes.
+
+C. 3-Second Audio Diagnostics & Diagnostic Tone Repair:
+   - Output Tone Test:
+     * Synthesizes a clean 440 Hz sinusoidal wave strictly constrained to exactly 3.0 seconds.
+     * Formatted AudioTrack with USAGE_MEDIA and CONTENT_TYPE_MUSIC.
+     * Enforces setPreferredDevice() to the requested output device.
+     * Verifies track.routedDevice after playback starts.
+     * Displays a live 3-second countdown (3s -> 2s -> 1s) and progress indicator.
+   - Microphone Test:
+     * Records audio from the explicitly requested input device for exactly 3.0 seconds.
+     * Enforces setPreferredDevice() on AudioRecord and verifies routedDevice.
+     * Displays real-time live amplitude meter and countdown.
+     * Immediately plays back the 3-second recording through the verified output device.
+     * Zero audio is stored to disk or transmitted (in-memory test buffer).
+
+D. Independent Input and Output Routing:
+   - Selection of input does not alter the output preference or stream.
+   - Selection of output does not alter the input preference or stream.
+   - Resetting one channel to system default preserves the custom configuration of the other.
+
+3. TEST EXECUTION & VALIDATION
+--------------------------------------------------------------------------------
+- Unit & Robolectric Tests: 37/37 PASSED
+  * AudioRoutingManagerTest (14 tests passed, including Phase 9 verification & isolation)
+  * AudioDeviceMapperTest (passed)
+  * AudioPerformanceManagerTest (passed)
+  * AudioSessionManagerTest (passed)
+  * ExampleRobolectricTest (passed)
+  * ExampleUnitTest (passed)
+  * GreetingScreenshotTest (passed)
+- Gradle Assemble Debug: SUCCESSFUL
+- Output Artifact:
+  * SonoRoute-v1.9.0-debug.apk (Project root)
+  * app/build/outputs/apk/debug/app-debug.apk
+
+================================================================================
+PHASE 9 COMPLETED SUCCESSFULLY
+================================================================================

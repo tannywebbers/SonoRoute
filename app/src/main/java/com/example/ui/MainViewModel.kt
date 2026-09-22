@@ -325,7 +325,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         audioRoutingManager.testOutputRoute(activeOutputDevice.value) { status ->
-            if (status.contains("Finished") || status.contains("error", ignoreCase = true) || status.contains("Failed")) {
+            if (status.contains("Finished") || status.contains("complete", ignoreCase = true) || status.contains("error", ignoreCase = true) || status.contains("Failed")) {
                 audioSessionManager.releaseOutputAccess("Output Route Test")
             }
             onStatusUpdate(status)
