@@ -120,13 +120,18 @@ class AudioRoutingManager(
             }
 
             // CRITICAL: Start persistent Foreground Service so Android keeps the route across external apps
-            val currentInName = _userSelectedInput.value?.name ?: "System Default"
+            val currentIn = _userSelectedInput.value
+            val currentInName = currentIn?.name ?: "System Default"
+            val currentInId = currentIn?.id ?: -1
+            val currentInType = currentIn?.type ?: -1
             AudioSessionService.start(
                 context = context,
                 outputName = device.name,
                 inputName = currentInName,
                 outputId = device.id,
-                outputType = device.type
+                outputType = device.type,
+                inputId = currentInId,
+                inputType = currentInType
             )
 
             val updatedDevice = device.copy(isSelected = true)
@@ -144,6 +149,7 @@ class AudioRoutingManager(
             )
 
             prefs.edit()
+                .putInt("pref_out_id", device.id)
                 .putInt("pref_out_type", device.type)
                 .putString("pref_out_name", device.name)
                 .putString("pref_out_address", device.address)
@@ -201,16 +207,32 @@ class AudioRoutingManager(
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val availableComm = audioManager.availableCommunicationDevices
-                val targetInfo = availableComm.find { it.id == device.id }
-                    ?: availableComm.find { it.type == device.type }
-
-                if (targetInfo != null) {
-                    val ok = audioManager.setCommunicationDevice(targetInfo)
-                    verified = ok
-                    reason = if (ok) "Enforced input via CommunicationDevice" else "Requested input"
+                val routedOutput = _userSelectedOutput.value
+                if (routedOutput != null) {
+                    // Keep the communication device tied to the routed OUTPUT (sink).
+                    // The chosen input is pinned independently via the silent hold-stream's
+                    // AudioRecord.preferredDevice, so input and output can differ.
+                    val targetInfo = availableComm.find { it.id == routedOutput.id }
+                        ?: availableComm.find { it.type == routedOutput.type }
+                    if (targetInfo != null) {
+                        audioManager.setCommunicationDevice(targetInfo)
+                        verified = true
+                        reason = "Input pinned via preferred device; output kept as communication device"
+                    } else {
+                        verified = true
+                        reason = "Applied input route preference"
+                    }
                 } else {
-                    verified = true
-                    reason = "Applied input route preference"
+                    val targetInfo = availableComm.find { it.id == device.id }
+                        ?: availableComm.find { it.type == device.type }
+                    if (targetInfo != null) {
+                        val ok = audioManager.setCommunicationDevice(targetInfo)
+                        verified = ok
+                        reason = if (ok) "Enforced input via CommunicationDevice" else "Requested input"
+                    } else {
+                        verified = true
+                        reason = "Applied input route preference"
+                    }
                 }
             } else {
                 if (device.isBluetooth) {
@@ -221,15 +243,18 @@ class AudioRoutingManager(
                 reason = "Applied legacy input route"
             }
 
-            val currentOutName = _userSelectedOutput.value?.name ?: "System Default"
-            val outId = _userSelectedOutput.value?.id ?: -1
-            val outType = _userSelectedOutput.value?.type ?: -1
+            val currentOut = _userSelectedOutput.value
+            val currentOutName = currentOut?.name ?: "System Default"
+            val outId = currentOut?.id ?: -1
+            val outType = currentOut?.type ?: -1
             AudioSessionService.start(
                 context = context,
                 outputName = currentOutName,
                 inputName = device.name,
                 outputId = outId,
-                outputType = outType
+                outputType = outType,
+                inputId = device.id,
+                inputType = device.type
             )
 
             val updatedDevice = device.copy(isSelected = true)
@@ -247,6 +272,7 @@ class AudioRoutingManager(
             )
 
             prefs.edit()
+                .putInt("pref_in_id", device.id)
                 .putInt("pref_in_type", device.type)
                 .putString("pref_in_name", device.name)
                 .apply()
@@ -275,8 +301,18 @@ class AudioRoutingManager(
                 audioManager.mode = AudioManager.MODE_NORMAL
                 AudioSessionService.stop(context)
             } else {
-                val inName = _userSelectedInput.value?.name ?: "System Default"
-                AudioSessionService.update(context, "System Default", inName)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    audioManager.clearCommunicationDevice()
+                }
+                val inDevice = _userSelectedInput.value
+                val inName = inDevice?.name ?: "System Default"
+                AudioSessionService.update(
+                    context,
+                    "System Default",
+                    inName,
+                    inputId = inDevice?.id ?: -1,
+                    inputType = inDevice?.type ?: -1
+                )
             }
 
             _userSelectedOutput.value = null
@@ -286,7 +322,12 @@ class AudioRoutingManager(
             _outputControlMode.value = RouteControlMode.SYSTEM_CONTROLLED
             _routeState.value = RouteOperationState.Idle
 
-            prefs.edit().remove("pref_out_type").remove("pref_out_name").remove("pref_out_address").apply()
+            prefs.edit()
+                .remove("pref_out_id")
+                .remove("pref_out_type")
+                .remove("pref_out_name")
+                .remove("pref_out_address")
+                .apply()
             updateRoutingState(selectedOutput = null, actualOutput = null, outputStatus = "System controlled")
             Log.d(TAG, "Output reset to system default")
         } catch (e: Exception) {
@@ -307,7 +348,16 @@ class AudioRoutingManager(
             } else {
                 val outName = _userSelectedOutput.value?.name ?: "System Default"
                 val outId = _userSelectedOutput.value?.id ?: -1
-                AudioSessionService.update(context, outName, "System Default", outId)
+                val outType = _userSelectedOutput.value?.type ?: -1
+                AudioSessionService.update(
+                    context,
+                    outName,
+                    "System Default",
+                    outId,
+                    outType,
+                    inputId = -1,
+                    inputType = -1
+                )
             }
 
             _userSelectedInput.value = null
@@ -317,7 +367,11 @@ class AudioRoutingManager(
             _inputControlMode.value = RouteControlMode.SYSTEM_CONTROLLED
             _routeState.value = RouteOperationState.Idle
 
-            prefs.edit().remove("pref_in_type").remove("pref_in_name").apply()
+            prefs.edit()
+                .remove("pref_in_id")
+                .remove("pref_in_type")
+                .remove("pref_in_name")
+                .apply()
             updateRoutingState(selectedInput = null, actualInput = null, inputStatus = "System controlled")
             Log.d(TAG, "Input reset to system default")
         } catch (e: Exception) {

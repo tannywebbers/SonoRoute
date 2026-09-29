@@ -6,5 +6,11 @@ enum class AudioProfile(val title: String, val subtitle: String) {
     RECORDING("Recording", "Stable uncompressed microphone capture"),
     VOICE_CHAT("Voice Chat", "Communication-focused audio routing"),
     SCREEN_SHARING("Screen Sharing", "Capture-compatible audio configuration"),
-    MEDIA("Media Playback", "High-fidelity audio playback stream")
+    MEDIA("Media Playback", "High-fidelity audio playback stream");
+
+    val displayName: String
+        get() = title
+
+    val description: String
+        get() = subtitle
 }

@@ -23,6 +23,9 @@ import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Headset
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,6 +33,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -50,14 +54,16 @@ import com.example.ui.theme.DarkSurface
 import com.example.ui.theme.NeonAmber
 import com.example.ui.theme.NeonCyan
 import com.example.ui.theme.NeonGreen
+import com.example.ui.theme.NeonRed
 
 fun getProfileIcon(profile: AudioProfile): ImageVector {
     return when (profile) {
         AudioProfile.STANDARD -> Icons.Default.Equalizer
         AudioProfile.GAMING -> Icons.Default.Gamepad
-        AudioProfile.VOIP -> Icons.Default.Headset
-        AudioProfile.STUDIO -> Icons.Default.Mic
-        AudioProfile.CUSTOM -> Icons.Default.GraphicEq
+        AudioProfile.VOICE_CHAT -> Icons.Default.Headset
+        AudioProfile.RECORDING -> Icons.Default.Mic
+        AudioProfile.SCREEN_SHARING -> Icons.Default.GraphicEq
+        AudioProfile.MEDIA -> Icons.Default.VolumeUp
     }
 }
 
@@ -183,6 +189,106 @@ fun ProfileSelectionBottomSheet(
                 ),
                 color = MaterialTheme.colorScheme.onSurface
             )
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val (statusLabel, statusColor) = when (activeSession.lifecycleState) {
+                    SessionLifecycleState.ACTIVE, SessionLifecycleState.CONFIGURING -> "● ${activeSession.lifecycleState.label}" to NeonCyan
+                    SessionLifecycleState.PAUSED, SessionLifecycleState.PAUSING -> "⏸ ${activeSession.lifecycleState.label}" to NeonAmber
+                    SessionLifecycleState.ERROR -> "! ${activeSession.lifecycleState.label}" to NeonRed
+                    else -> "○ ${activeSession.lifecycleState.label}" to MaterialTheme.colorScheme.onSurfaceVariant
+                }
+                Text(
+                    text = statusLabel,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = statusColor
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val canStart = activeSession.lifecycleState == SessionLifecycleState.IDLE ||
+                        activeSession.lifecycleState == SessionLifecycleState.STOPPING ||
+                        activeSession.lifecycleState == SessionLifecycleState.ERROR
+                    val isActive = activeSession.lifecycleState == SessionLifecycleState.ACTIVE ||
+                        activeSession.lifecycleState == SessionLifecycleState.CONFIGURING
+
+                    if (canStart) {
+                        Button(
+                            onClick = onStartSession,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = NeonCyan,
+                                contentColor = DarkSurface
+                            ),
+                            modifier = Modifier.testTag("start_session_button")
+                        ) {
+                            Text(
+                                text = "Start",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                        }
+                    } else if (activeSession.lifecycleState == SessionLifecycleState.PAUSED) {
+                        Button(
+                            onClick = onResumeSession,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = NeonCyan,
+                                contentColor = DarkSurface
+                            ),
+                            modifier = Modifier.testTag("resume_session_button")
+                        ) {
+                            Text(
+                                text = "Resume",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                        }
+                    } else if (isActive) {
+                        Button(
+                            onClick = onPauseSession,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = NeonAmber,
+                                contentColor = DarkSurface
+                            ),
+                            modifier = Modifier.testTag("pause_session_button")
+                        ) {
+                            Text(
+                                text = "Pause",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                        }
+                    }
+
+                    if (activeSession.lifecycleState != SessionLifecycleState.IDLE) {
+                        OutlinedButton(
+                            onClick = onStopSession,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = NeonRed
+                            ),
+                            modifier = Modifier.testTag("stop_session_button")
+                        ) {
+                            Text(
+                                text = "Stop",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(14.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
             Spacer(modifier = Modifier.height(14.dp))

@@ -19,7 +19,10 @@ enum class BufferOption(val title: String, val description: String) {
     LOW("Low", "Minimized frame buffer for reduced latency"),
     BALANCED("Balanced", "Balanced frame buffer for daily media"),
     STABLE("Stable", "Extended buffer to safeguard against underruns"),
-    CUSTOM("Custom", "User-specified buffer frame count")
+    CUSTOM("Custom", "User-specified buffer frame count");
+
+    val displayName: String
+        get() = title
 }
 
 enum class ChannelOption(val title: String, val channels: Int) {
@@ -82,4 +85,23 @@ data class AudioPerformanceState(
     val adjustmentReason: String? = null,
     val activeOutputDeviceName: String = "Built-in Speaker",
     val audioEngineName: String = "AAudio / OpenSL ES"
-)
+) {
+    val latencyLevel: LatencyLevel
+        get() = actualLatencyLevel
+
+    val bufferOption: BufferOption
+        get() = requestedBufferOption
+
+    val effectiveSampleRate: Int
+        get() = actualSampleRate
+
+    val effectiveBufferFrames: Int
+        get() = actualBufferSizeFrames
+
+    val calculatedLatencyMs: Float
+        get() = if (effectiveSampleRate > 0) {
+            effectiveBufferFrames * 1000f / effectiveSampleRate
+        } else {
+            0f
+        }
+}

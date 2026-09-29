@@ -64,8 +64,7 @@ object AudioDeviceMapper {
     fun resolveCategory(type: Int): DeviceCategory = when (type) {
         AudioDeviceInfo.TYPE_BUILTIN_EARPIECE,
         AudioDeviceInfo.TYPE_BUILTIN_SPEAKER,
-        AudioDeviceInfo.TYPE_BUILTIN_MIC,
-        15 -> DeviceCategory.BUILT_IN
+        AudioDeviceInfo.TYPE_BUILTIN_MIC -> DeviceCategory.BUILT_IN
 
         AudioDeviceInfo.TYPE_WIRED_HEADSET,
         AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
@@ -99,7 +98,6 @@ object AudioDeviceMapper {
         AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> "Bluetooth Audio"
         AudioDeviceInfo.TYPE_HDMI -> "HDMI Audio"
         AudioDeviceInfo.TYPE_USB_DEVICE -> if (isInput) "USB Microphone" else "USB Audio Device"
-        15 -> "Phone Microphone"
         AudioDeviceInfo.TYPE_USB_HEADSET -> if (isInput) "USB Headset Mic" else "USB Headset"
         26 -> if (isInput) "Bluetooth LE Mic" else "Bluetooth LE Headset"
         27 -> "Bluetooth LE Speaker"

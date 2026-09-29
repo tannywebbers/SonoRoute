@@ -106,12 +106,18 @@ class AudioSessionManager(
         val outName = routingManager.userSelectedOutput.value?.name ?: "System Default"
         val inName = routingManager.userSelectedInput.value?.name ?: "System Default"
         val outId = routingManager.userSelectedOutput.value?.id ?: -1
+        val outType = routingManager.userSelectedOutput.value?.type ?: -1
+        val inId = routingManager.userSelectedInput.value?.id ?: -1
+        val inType = routingManager.userSelectedInput.value?.type ?: -1
 
         AudioSessionService.start(
             context,
             outputName = outName,
             inputName = inName,
             outputId = outId,
+            outputType = outType,
+            inputId = inId,
+            inputType = inType,
             isMonitoring = _isMonitoringEnabled.value
         )
 
@@ -299,11 +305,17 @@ class AudioSessionManager(
         val outName = routingManager.userSelectedOutput.value?.name ?: "System Default"
         val inName = routingManager.userSelectedInput.value?.name ?: "System Default"
         val outId = routingManager.userSelectedOutput.value?.id ?: -1
+        val outType = routingManager.userSelectedOutput.value?.type ?: -1
+        val inId = routingManager.userSelectedInput.value?.id ?: -1
+        val inType = routingManager.userSelectedInput.value?.type ?: -1
         AudioSessionService.update(
             context,
             outputName = outName,
             inputName = inName,
             outputId = outId,
+            outputType = outType,
+            inputId = inId,
+            inputType = inType,
             isMonitoring = _isMonitoringEnabled.value
         )
     }

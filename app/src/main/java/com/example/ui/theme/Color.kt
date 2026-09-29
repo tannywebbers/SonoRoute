@@ -55,3 +55,9 @@ val LightSurface = IosSurfaceLight
 val LightSurfaceVariant = IosSurfaceVariantLight
 val LightOnSurface = IosTextPrimary
 val LightOnSurfaceVariant = IosTextSecondary
+
+val DarkCardSurface = Color(0xFF1C2130)
+val NeonCyan = Color(0xFF22D3EE)
+val NeonGreen = AudioEmeraldActive
+val NeonAmber = Color(0xFFFBBF24)
+val NeonRed = Color(0xFFF87171)

@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.audio.model.AudioDeviceModel
 import com.example.ui.theme.DarkCardSurface
+import com.example.ui.theme.NeonAmber
 import com.example.ui.theme.NeonCyan
 import com.example.ui.theme.NeonGreen
 
@@ -41,6 +42,7 @@ import com.example.ui.theme.NeonGreen
 fun ActiveRouteCard(
     activeOutput: AudioDeviceModel?,
     activeInput: AudioDeviceModel?,
+    isRouteForced: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -78,17 +80,26 @@ fun ActiveRouteCard(
                 )
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = NeonGreen.copy(alpha = 0.15f)
+                    color = if (isRouteForced) NeonAmber.copy(alpha = 0.15f) else NeonGreen.copy(alpha = 0.15f)
                 ) {
                     Text(
-                        text = "LIVE",
+                        text = if (isRouteForced) "FORCED" else "LIVE",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.ExtraBold,
-                            color = NeonGreen
+                            color = if (isRouteForced) NeonAmber else NeonGreen
                         )
                     )
                 }
+            }
+
+            if (isRouteForced) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Route is held and re-asserted automatically — it will not revert to the phone default.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Spacer(modifier = Modifier.height(14.dp))

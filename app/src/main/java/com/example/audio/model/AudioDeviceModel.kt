@@ -19,7 +19,10 @@ data class AudioDeviceModel(
     val channelCounts: List<Int> = emptyList(),
     val supportedEncodings: List<String> = emptyList(),
     val address: String = ""
-)
+) {
+    val typeDisplayName: String
+        get() = typeLabel
+}
 
 enum class DeviceCategory(val label: String) {
     BUILT_IN("Built-in"),
